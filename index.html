@@ -57,6 +57,40 @@
             border-bottom: 1px solid var(--border-color);
             box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
+        
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-container {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--background-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px dashed var(--border-color);
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+        .logo-container:hover {
+            border-color: var(--primary-color);
+            background-color: #e8f0fe;
+        }
+        .app-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .logo-placeholder .material-symbols-outlined {
+            font-size: 24px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
 
         .app-header h1 {
             font-size: 1.5rem;
@@ -106,6 +140,11 @@
             display: flex;
             align-items: center;
         }
+        
+        .card-header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
 
         /* Tables */
         .data-table {
@@ -129,7 +168,6 @@
             vertical-align: middle;
         }
         
-        /* Center specific headers */
         .data-table .slot-header,
         .personnel-status-table thead .initials-col,
         .personnel-status-table thead .percentage-col {
@@ -150,7 +188,7 @@
             border-bottom: none;
         }
         
-        .booking-table, .personnel-status-table {
+        .booking-table, .personnel-status-table, .personnel-schedule-table {
             table-layout: fixed;
         }
         
@@ -159,12 +197,22 @@
         .booking-table .locale-col { width: 80px; }
         .booking-table .sa-col { width: 80px; }
         
-        .personnel-status-table .main-col-personnel { width: 180px; }
-        .personnel-status-table .initials-col { width: 80px; }
-        .personnel-status-table .percentage-col { width: 80px; }
+        .personnel-status-table .main-col-personnel,
+        .personnel-schedule-table .main-col-personnel {
+            width: 180px;
+        }
+        .personnel-status-table .initials-col,
+        .personnel-schedule-table .initials-col { 
+            width: 80px;
+        }
+        .personnel-status-table .percentage-col,
+        .personnel-schedule-table .percentage-col { 
+            width: 80px;
+        }
 
         .booking-table td.main-col,
-        .personnel-status-table td.main-col-personnel {
+        .personnel-status-table td.main-col-personnel,
+        .personnel-schedule-table td.main-col-personnel {
             font-weight: 500;
             vertical-align: middle;
         }
@@ -212,23 +260,10 @@
             transition: background-color 0.2s;
             font-size: 0.85rem;
             position: relative;
-            border-left: 1px solid var(--border-color);
         }
         
-        .booking-cell.afternoon {
-            /* border is now part of the day separator style */
-        }
-
-        /* Vertical Day Separators */
-        .booking-table th[colSpan="2"],
-        .personnel-status-table th[colSpan="2"],
-        .booking-table .booking-cell.afternoon,
-        .personnel-status-table .status-cell.afternoon {
-            border-right: 1px solid #c4c6c9;
-        }
-
         .booking-cell:hover {
-            background-color: #e8f0fe !important; /* Use important to override inline style on hover */
+            background-color: #e8f0fe !important;
         }
 
         .booking-cell.booked {
@@ -256,15 +291,11 @@
             vertical-align: middle;
             text-align: center;
             padding: 0.2rem;
-            border-left: 1px solid var(--border-color);
             cursor: pointer;
             transition: filter 0.2s;
         }
         .personnel-status-table .status-cell:hover {
             filter: brightness(1.15);
-        }
-        .personnel-status-table .status-cell.afternoon {
-             /* border is now part of the day separator style */
         }
         .personnel-status-table .status-present {
              display: inline-block;
@@ -276,6 +307,35 @@
         .personnel-status-table .status-present.override {
              background-color: var(--accent-color);
         }
+        
+        /* --- Day & Slot Border Logic --- */
+        /* This rule creates the outer frame for each day in the main header row */
+        .booking-table th[colSpan="2"],
+        .personnel-status-table th[colSpan="2"],
+        .personnel-schedule-table th[colSpan="2"] {
+            border-left: 1px solid #999;
+            border-right: 1px solid #999;
+        }
+        
+        /* These rules style the M/P headers and cells consistently, using the .afternoon class */
+        /* M slots (headers and cells) get a strong left border */
+        .slot-header:not(.afternoon),
+        .booking-cell:not(.afternoon),
+        .status-cell:not(.afternoon),
+        .personnel-schedule-cell:not(.afternoon) {
+            border-left: 1px solid #999;
+        }
+
+        /* P slots (headers and cells) get a light middle border and a strong right border */
+        .slot-header.afternoon,
+        .booking-cell.afternoon,
+        .status-cell.afternoon,
+        .personnel-schedule-cell.afternoon {
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid #999;
+        }
+        /* --- End Day & Slot Border Logic --- */
+
 
         /* Campaign & Category Rows */
         .booking-table .category-header-row td {
@@ -308,8 +368,6 @@
         }
         
         .campaign-cell-active {
-            border-left: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
             color: white;
             text-shadow: 0 1px 3px rgba(0,0,0,0.4);
             position: relative;
@@ -343,12 +401,17 @@
             transition: background-color 0.2s, box-shadow 0.2s;
         }
 
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .btn-primary {
             background-color: var(--primary-color);
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background-color: var(--primary-dark);
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
@@ -368,7 +431,7 @@
             border: 1px solid var(--border-color);
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background-color: var(--background-color);
         }
 
@@ -675,6 +738,102 @@
             background-color: #fce8e6;
             border-color: var(--danger-color);
             color: #a50e0e;
+        }
+
+        /* View Switcher */
+        .view-switcher {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .view-switcher button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .view-switcher .material-symbols-outlined {
+            margin-right: 0;
+            font-size: 1.25rem;
+            vertical-align: -4px;
+        }
+
+        /* Personnel Schedule View */
+        .personnel-schedule-table {
+            table-layout: fixed;
+        }
+
+        .personnel-schedule-table > thead > tr:first-child > th {
+            background-color: #f1f3f4;
+            text-align: center;
+        }
+        .personnel-schedule-table > thead th[rowspan="2"] {
+            text-align: left;
+        }
+
+        .personnel-schedule-cell {
+            height: 60px;
+            vertical-align: middle;
+            text-align: center;
+            border-radius: 4px;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            font-size: 0.85rem;
+            position: relative;
+            color: white;
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);
+            padding: 0.2rem;
+            overflow: hidden;
+            word-break: break-word;
+        }
+        .personnel-schedule-cell.free {
+            background-color: var(--surface-color);
+            cursor: pointer;
+            text-shadow: none;
+        }
+        .personnel-schedule-cell.free:hover {
+            background-color: #e8f0fe;
+        }
+        .personnel-schedule-cell .instrument-name {
+            display: block;
+            font-weight: 500;
+        }
+        .personnel-schedule-cell .note-indicator {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 12px;
+            height: 12px;
+            fill: white;
+            filter: drop-shadow(0 0 1px rgba(0,0,0,0.7));
+        }
+
+        /* Template Manager */
+        .template-manager {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .template-manager .select-field {
+            flex-grow: 1;
+            padding: 0.6rem;
+            font-size: 0.9rem;
+        }
+
+        /* Unprocessed Imports Section */
+        .unprocessed-imports {
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border-color);
+        }
+        .unprocessed-imports h4 {
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+        .unprocessed-imports p {
+            margin-top: -0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
         }
 
         /* Utility */
