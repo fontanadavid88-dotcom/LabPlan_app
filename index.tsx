@@ -1,6 +1,7 @@
+// FIX: Corrected module imports. `flushSync` is from `react-dom` and `createRoot` is from `react-dom/client`.
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 // --- INTERFACES & TYPES ---
 interface InstrumentCategory {
