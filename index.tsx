@@ -245,7 +245,8 @@ const parseICS = (icsContent: string): { summary: string; startDate: string; end
     return events;
 };
 
-const findByKeywords = <T extends { keywords?: string }>(name: string, items: T[]): T | null => {
+// FIX: Added `id: string` to the generic constraint to ensure returned items have an `id` property, resolving type errors in `CampaignManager`.
+const findByKeywords = <T extends { id: string; keywords?: string }>(name: string, items: T[]): T | null => {
     const lowerCaseName = name.toLowerCase();
     for (const item of items) {
         if (item.keywords) {
@@ -1487,13 +1488,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({ data, setData, isReadOnly
             const dayOfWeek = parseInt(dayOfWeekStr, 10);
             const date = addDays(weekStartDate, dayOfWeek);
 
+            // FIX: Explicitly cast `value` to its expected type to resolve TypeScript errors on `personnelId` and `note`.
+            const bookingDetails = value as {personnelId: string, note?: string};
+
             return {
                 id: `${Date.now()}-${Math.random()}`,
                 instrumentId,
-                personnelId: value.personnelId,
+                personnelId: bookingDetails.personnelId,
                 date: formatDate(date),
                 slot: slot as 'M' | 'P',
-                note: value.note,
+                note: bookingDetails.note,
             };
         });
 
@@ -1570,7 +1574,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ data, setData, isReadOnly
             .sort((a, b) => {
                 if (a.startDate !== b.startDate) return a.startDate.localeCompare(b.startDate);
                 const durationA = new Date(a.endDate).getTime() - new Date(a.startDate).getTime();
-                const durationB = new Date(b.endDate).getTime() - new Date(b.startDate).getTime();
+                const durationB = new Date(b.endDate).getTime() - new Date(b.endDate).getTime();
                 return durationB - durationA;
             });
 
@@ -1620,17 +1624,37 @@ const DashboardView: React.FC<DashboardViewProps> = ({ data, setData, isReadOnly
 
     return (
         <div>
+            <div className="print-only">
+                <div className="print-header">
+                    <div className="print-header-title">
+                        {data.appLogo && <img src={data.appLogo} alt="App Logo" className="app-logo" />}
+                        <h1>Pianificazione Settimanale Strumenti</h1>
+                    </div>
+                    <div className="week-info">
+                        <h2>SETTIMANA {week}</h2>
+                        <p>{weekStartDate.toLocaleDateString('it-IT')} - {addDays(weekStartDate, 4).toLocaleDateString('it-IT')}</p>
+                    </div>
+                </div>
+            </div>
+
             <div className="card">
                 <div className="d-flex justify-between align-center">
-                    <button className="btn btn-secondary" onClick={() => setCurrentDate(addDays(currentDate, -7))}>&larr; Precedente</button>
+                    <button className="btn btn-secondary no-print" onClick={() => setCurrentDate(addDays(currentDate, -7))}>&larr; Precedente</button>
                     <div className="text-center">
                         <h2 className="mb-0">SETTIMANA {week}</h2>
                         <p className="text-secondary">{weekStartDate.toLocaleDateString('it-IT')} - {addDays(weekStartDate, 4).toLocaleDateString('it-IT')}</p>
                     </div>
-                    <button className="btn btn-secondary" onClick={() => setCurrentDate(addDays(currentDate, 7))}>Successivo &rarr;</button>
+                    <div className="d-flex align-center" style={{gap: '0.75rem'}}>
+                        <button className="btn btn-secondary no-print" onClick={() => setCurrentDate(addDays(currentDate, 7))}>Successivo &rarr;</button>
+                        {dashboardTab === 'instruments' && (
+                             <button className="btn btn-secondary btn-icon no-print" onClick={() => window.print()} title="Stampa settimana">
+                                <span className="material-symbols-outlined">print</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
                 {!isReadOnly && (
-                    <div className="template-manager">
+                    <div className="template-manager no-print">
                         <div className="template-controls-group">
                              <select className="select-field" value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)}>
                                 <option value="">Seleziona un template...</option>
@@ -1665,7 +1689,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ data, setData, isReadOnly
                 )}
             </div>
 
-            <div className="view-switcher nav-buttons mb-1">
+            <div className="view-switcher nav-buttons mb-1 no-print">
                 <button onClick={() => setDashboardTab('instruments')} className={dashboardTab === 'instruments' ? 'active' : ''}>
                     <span className="material-symbols-outlined">science</span> Vista Strumenti
                 </button>
@@ -1676,7 +1700,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ data, setData, isReadOnly
 
             {dashboardTab === 'instruments' && (
                 <>
-                    <div className="card instrument-view-controls">
+                    <div className="card instrument-view-controls no-print">
                          <div className="input-group">
                             <label>Filtra per Personale</label>
                             <select className="select-field" value={personnelFilter} onChange={e => setPersonnelFilter(e.target.value)}>
@@ -1833,7 +1857,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ data, setData, isReadOnly
                         )}
                     </div>
                 
-                    <div className="card">
+                    <div className="card no-print">
                         <h3>🧑‍💼 STATO PERSONALE</h3>
                         <table className="data-table personnel-status-table">
                             <thead>
@@ -1910,14 +1934,30 @@ const DashboardView: React.FC<DashboardViewProps> = ({ data, setData, isReadOnly
             )}
 
             <div className="card">
-                <h3>NOTE SETTIMANALI</h3>
+                <h3 className="no-print">NOTE SETTIMANALI</h3>
                 <textarea 
-                    className="textarea-field"
+                    className="textarea-field no-print"
                     placeholder="Note generali per la settimana..."
                     value={data.weeklyNotes[weekKey] || ''}
                     onChange={(e) => setWeeklyNote(e.target.value)}
                     readOnly={isReadOnly}
                 />
+                <div className="print-only">
+                    <h3>NOTE SETTIMANALI</h3>
+                    <p>{data.weeklyNotes[weekKey] || 'Nessuna nota per questa settimana.'}</p>
+                </div>
+            </div>
+            
+            <div className="print-only card">
+                <h3>Legenda Personale</h3>
+                <div className="print-legend-items">
+                    {data.personnel.map(p => (
+                        <div key={p.id} className="legend-item">
+                            <span className="color-dot" style={{ backgroundColor: p.color }}></span>
+                            {p.name}
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {editingStatus && !isReadOnly && (
